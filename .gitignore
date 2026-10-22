@@ -1,0 +1,8 @@
+.gradle/
+build/
+bin/
+voz-app/
+app/
+# Configuración real con la clave: nunca se sube
+config.properties
+*.local.properties

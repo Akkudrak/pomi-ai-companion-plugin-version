@@ -1,0 +1,23 @@
+name: Pomi
+version: '${version}'
+main: com.maine.pomi.PomiPlugin
+api-version: '1.21'
+description: Pomi, la ranita compañera que te sigue, pelea, junta recursos y platica con Grok.
+author: Akkudrak
+libraries:
+  - org.xerial:sqlite-jdbc:3.46.0.0
+
+commands:
+  pomi:
+    description: Llama a Pomi, dale órdenes o platica con ella.
+    aliases: [p]
+    usage: /p ayuda
+    permission: pomi.use
+
+permissions:
+  pomi.use:
+    default: true
+    description: Llamar, mandar y platicar con Pomi.
+  pomi.admin:
+    default: op
+    description: Cambiar el modelo de Grok y recargar la configuración.

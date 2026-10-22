@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.maine'
+version = '1.1.1'
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+}
+
+dependencies {
+    // Paper 26.2, build #134. Gson comes with Paper; the SQLite driver is downloaded by Paper at
+    // startup (see "libraries" in plugin.yml), so nothing needs to be shaded into the jar.
+    compileOnly 'io.papermc.paper:paper-api:26.2.build.134-stable'
+}
+
+java {
+    // Minecraft 26.x runs on Java 25.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+processResources {
+    def props = [version: project.version]
+    inputs.properties props
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+jar {
+    archiveFileName = "Pomi-${project.version}.jar"
+}
