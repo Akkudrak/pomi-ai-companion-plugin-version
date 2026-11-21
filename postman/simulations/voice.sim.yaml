@@ -1,0 +1,12 @@
+simulation: pomi-voice
+routing: path
+mocks:
+  - routeKey: kokoro
+    path: ../mocks/kokoro.yaml
+  - routeKey: kokoro-error
+    path: ../mocks/kokoro-error.yaml
+    scenarios:
+      - overrides:
+          conditions:
+            error:
+              status_code: 503

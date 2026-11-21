@@ -250,6 +250,16 @@ public final class PomiCommand implements CommandExecutor, TabCompleter {
 
 	/** "/p voz": a code for the Pomi Voz app. "/p voz quitar": unlinks the player's apps. */
 	private void voice(Player player, String[] args) {
+		if (args.length > 1 && args[1].equalsIgnoreCase("estado")) {
+			Chat.info(player, plugin.inGameVoice() == null ? "Simple Voice Chat no está instalado o su API no está disponible."
+					: plugin.inGameVoice().status(player));
+			return;
+		}
+		if (args.length == 1 && plugin.inGameVoice() != null) {
+			Chat.info(player, plugin.inGameVoice().status(player));
+			Chat.info(player, "Para vincular la app de escritorio: /p voz app.");
+			return;
+		}
 		PomiVoiceLink link = plugin.voice();
 		if (link == null || !link.running()) {
 			Chat.error(player, "La voz de Pomi no está activa en este servidor.");
@@ -362,7 +372,7 @@ public final class PomiCommand implements CommandExecutor, TabCompleter {
 		Chat.info(player, "quitar [n], construir pared <largo> <alto> | columna <alto>, craftear <item> [n], color <"
 				+ String.join("|", PomiChoice.COLOURS.keySet()) + ">");
 		Chat.info(player, "Sin Grok: baila, canta, salta, saluda, croa, dame (te da lo que trae), toma (agarra lo de tu mano)");
-		Chat.info(player, "voz — vincula la app Pomi Voz para oírla · voz quitar — la desvincula");
+		Chat.info(player, "voz — estado de Simple Voice Chat · voz app — vincula Pomi Voz · voz quitar — desvincula la app");
 		Chat.info(player, "Info: receta <item>, bioma <nombre>, muerte, siguiente, estado · clic derecho en ella abre su ventana");
 		Chat.info(player, "Dale cosas lanzándoselas con Q. Recursos: " + CompanionWork.resourceNames() + ".");
 		Chat.info(player, "Hasta " + MathUtil.clamp(CompanionBuild.MAX_SIZE, 1, 10) + " bloques por lado al construir.");
@@ -380,7 +390,7 @@ public final class PomiCommand implements CommandExecutor, TabCompleter {
 				case "construir" -> options.addAll(List.of("pared", "columna"));
 				case "color" -> options.addAll(PomiChoice.COLOURS.keySet());
 				case "craftear" -> options.addAll(List.of("oak_planks", "stick", "torch", "crafting_table"));
-				case "voz" -> options.add("quitar");
+				case "voz" -> options.addAll(List.of("estado", "app", "quitar"));
 				default -> {
 				}
 			}

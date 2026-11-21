@@ -26,6 +26,9 @@ public final class Chat {
 		if (plugin != null && plugin.voice() != null) {
 			plugin.voice().publish(player, text);
 		}
+		if (plugin != null && plugin.inGameVoice() != null) {
+			plugin.inGameVoice().publish(player, text);
+		}
 	}
 
 	/** Status lines that aren't Pomi talking (help, "thinking", settings). */

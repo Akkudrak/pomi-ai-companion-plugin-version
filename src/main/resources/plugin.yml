@@ -4,6 +4,7 @@ main: com.maine.pomi.PomiPlugin
 api-version: '1.21'
 description: Pomi, la ranita compañera que te sigue, pelea, junta recursos y platica con Grok.
 author: Akkudrak
+softdepend: [voicechat]
 libraries:
   - org.xerial:sqlite-jdbc:3.46.0.0
 
