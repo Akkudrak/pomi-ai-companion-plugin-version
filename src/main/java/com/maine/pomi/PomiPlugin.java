@@ -11,6 +11,8 @@ import com.maine.pomi.config.PomiConfig;
 import com.maine.pomi.listener.PomiListener;
 import com.maine.pomi.network.PomiChannel;
 import com.maine.pomi.network.PomiVoiceLink;
+import com.maine.pomi.network.PomiInGameVoice;
+import com.maine.pomi.network.PomiSimpleVoiceChat;
 
 /**
  * Pomi as a Paper plugin: the frog companion lives on the server (body, jobs, inventory) and talks
@@ -26,6 +28,7 @@ public final class PomiPlugin extends JavaPlugin {
 	private PomiBrain brain;
 	private PomiChannel channel;
 	private PomiVoiceLink voice;
+	private PomiInGameVoice inGameVoice;
 
 	/** The running plugin, for the companion code that has no other way to reach it. */
 	public static PomiPlugin instance() {
@@ -42,6 +45,12 @@ public final class PomiPlugin extends JavaPlugin {
 		channel = new PomiChannel(this);
 		voice = new PomiVoiceLink(this);
 		voice.start();
+		if (Bukkit.getPluginManager().isPluginEnabled("voicechat")) {
+			PomiSimpleVoiceChat integration = new PomiSimpleVoiceChat(this);
+			if (integration.start()) inGameVoice = integration;
+		} else {
+			getLogger().info("Instala Simple Voice Chat para escuchar y hablar con Pomi dentro del juego.");
+		}
 
 		Bukkit.getPluginManager().registerEvents(new PomiListener(this), this);
 		PluginCommand command = getCommand("pomi");
@@ -59,6 +68,9 @@ public final class PomiPlugin extends JavaPlugin {
 
 	@Override
 	public void onDisable() {
+		if (inGameVoice != null) {
+			inGameVoice.shutdown();
+		}
 		if (companions != null) {
 			companions.shutdown();
 		}
@@ -90,5 +102,9 @@ public final class PomiPlugin extends JavaPlugin {
 
 	public PomiVoiceLink voice() {
 		return voice;
+	}
+
+	public PomiInGameVoice inGameVoice() {
+		return inGameVoice;
 	}
 }

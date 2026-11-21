@@ -26,22 +26,71 @@ con Grok desde el servidor, así que los jugadores entran con el cliente vanilla
 ## Instalar
 
 ```bash
-./gradlew build          # Java 25; genera build/libs/Pomi-1.1.0.jar
+bash gradlew build       # Java 25; genera build/libs/Pomi-1.2.0.jar
 ```
 
-Copia `Pomi-1.1.0.jar` a `plugins/` de un servidor **Paper 26.2** (probado con el build #134). Al
+Copia `Pomi-1.2.0.jar` a `plugins/` de un servidor **Paper 26.2** (base del proyecto: build #134). Al
 arrancar, Paper descarga solo el driver de SQLite (`libraries` en `plugin.yml`).
 
 Para que platique, define la variable de entorno `XAI_API_KEY` en el servidor (recomendado) o
 `xai-api-key` en `plugins/Pomi/config.properties`. Sin clave obedece las órdenes directas y avisa
 de los eventos con mensajes cortos.
 
+## Voz dentro de Minecraft con Simple Voice Chat
+
+1. Instala el [plugin oficial Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat)
+   para tu versión de Paper en `plugins/` y reinicia el servidor. La integración usa la API 2.5.27.
+2. Instala el mod Simple Voice Chat compatible con tu versión de Minecraft y tu cargador de mods
+   en cada cliente que vaya a usar voz. Configura su micrófono y su tecla para hablar.
+3. Abre el puerto **UDP** configurado por Simple Voice Chat (por defecto `24454`), según su
+   [guía de servidor](https://modrepo.de/minecraft/voicechat/wiki/server_setup).
+4. En `plugins/Pomi/config.properties`, configura `kokoro-url` y `whisper-url` con servicios
+   accesibles desde el servidor. Los valores de ejemplo son de una intranet y hay que ajustarlos
+   si no tienes acceso a ella. Kokoro debe entregar PCM mono de 16 bits little-endian a 24 kHz;
+   Whisper debe aceptar la API `/v1/audio/transcriptions`. Grok sigue usando `XAI_API_KEY`.
+5. Deja `simple-voice-chat=true`, usa `/p recargar`, llama a tu rana con `/p` y comprueba `/p voz`.
+   A menos de `voz-distancia=16` bloques, habla por Simple Voice Chat: **«Pomi, ven»**,
+   **«Pomi, consigue madera»** o **«Pomi, ¿cómo estás?»**. Al hacer una pausa de unos 700 ms,
+   Pomi transcribe la frase, ejecuta la orden y pronuncia su respuesta desde la posición de la rana.
+
+Solo escucha al dueño de esa Pomi y solo él oye su respuesta, con volumen según la distancia.
+Se ignoran las conversaciones de grupo y las frases que no empiezan con su nombre. Si dices solo
+«Pomi», tienes 7 segundos para la siguiente frase; el chat confirma que está escuchando.
+Mientras suena su respuesta, no captura tu micrófono para evitar el eco. Cada fragmento admite
+hasta 15 segundos. El audio cercano se envía a Whisper para detectar el nombre; la palabra de
+activación se reconoce después de transcribir, no localmente en el cliente.
+
+Todas las frases emitidas por Pomi (también las de órdenes por texto y eventos) usan esta salida
+cuando estás cerca y conectado a Voice Chat. Las órdenes se ejecutan como el jugador y conservan
+los permisos y límites existentes. `voz=false` desactiva únicamente la app de escritorio y su
+puerto HTTP; Simple Voice Chat funciona de forma independiente. Sin Voice Chat, el plugin sigue
+funcionando por texto y con la app. Si vinculas la app y usas Voice Chat a la vez, oirás ambas salidas.
+
+Diagnóstico: `/p voz estado`. Para vincular la app aunque tengas Voice Chat: `/p voz app`.
+Si Whisper o Kokoro fallan, revisa el log del servidor; las respuestas por chat siguen disponibles.
+
+### Verificar la integración al desarrollar
+
+`bash gradlew test` verifica las conversiones de audio y el reconocimiento del nombre. Las dos
+pruebas HTTP requieren la simulación local y se omiten cuando no se define `POMI_VOICE_SIM_URL`.
+Con Postman CLI 1.70+ (sin publicar ni iniciar sesión), en dos terminales:
+
+```bash
+postman simulation run postman/simulations/voice.sim.yaml --port 4900 --no-history
+POMI_VOICE_SIM_URL=http://127.0.0.1:4900 bash gradlew build
+```
+
+La simulación verifica el formato solicitado a Kokoro, devuelve un segundo de audio PCM sintético
+y simula un error 503. El contrato parte de las llamadas Kokoro existentes en este repositorio;
+no requiere buscar mocks en una cuenta de Postman. Esto no sustituye la prueba en Minecraft con
+Whisper y Kokoro reales, el micrófono, permisos y el puerto UDP de Voice Chat.
+
 ## Voz de Pomi (app de escritorio)
 
 El cliente vanilla no puede reproducir audio nuevo, así que la voz va en una app aparte para Windows,
 **Pomi Voz** (`Pomi Voz.exe`, un solo archivo, sin instalar nada; se distribuye aparte):
 
-1. En el juego: `/p voz` muestra la dirección del servidor y un código de 6 letras (vale 5 minutos).
+1. En el juego: `/p voz app` muestra la dirección del servidor y un código de 6 letras (vale 5 minutos).
 2. En la app: pon la dirección y el código y dale **Vincular**. Queda vinculada aunque se cierre.
 3. Todo lo que Pomi te dice (respuestas de Grok y frases fijas) se oye en la app, con su tono de rana.
 
@@ -94,6 +143,8 @@ Ejemplo completo en [config.properties.example](config.properties.example) (sin 
 | `espera-mensajes` | `2` | Segundos entre mensajes de un jugador. |
 | `solo-bloques-naturales` | `true` | Solo rompe tierra, piedra, troncos, minerales... nunca construcciones. |
 | `voz` | `true` | Activa el enlace con la app Pomi Voz. |
+| `simple-voice-chat` | `true` | Escuchar y responder dentro de Minecraft; requiere Voice Chat en servidor y cliente. |
+| `voz-distancia` | `16` | Distancia máxima al dueño para escuchar y responder (1–64 bloques). |
 | `voz-puerto` | `8765` | Puerto HTTP para la app. |
 | `kokoro-url` | intranet | Servidor Kokoro (`/v1/audio/speech`); el servidor lo llama. |
 | `kokoro-voz` | `ef_dora` | Voz de Kokoro. |
@@ -115,7 +166,7 @@ de logros y kills, y **Herobrine con un Mannequin real** (Paper 26.2 lo expone).
 
 Diferencias por ser plugin:
 
-- **Voz y oído**: en la app de escritorio Pomi Voz (ver arriba), no en el juego. Sin tecla K: se le habla con "Oye Pomi".
+- **Voz y oído**: dentro del juego con Simple Voice Chat, o en la app de escritorio Pomi Voz (ver arriba).
 - **Solo Pomi** (rana). Sin libro ni selector de compañeros.
 - Los mixins del mod se reemplazaron por API de Paper: `setAware(false)` en vez de FrogMixin,
   `PlayerAdvancementDoneEvent` en vez del mixin de logros, `Mannequin` de Paper para Herobrine.

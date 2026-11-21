@@ -141,6 +141,14 @@ public final class PomiConfig {
 		return number("voz-puerto", 8765);
 	}
 
+	public boolean simpleVoiceChat() {
+		return flag("simple-voice-chat", true);
+	}
+
+	public int voiceDistance() {
+		return Math.clamp(number("voz-distancia", 16), 1, 64);
+	}
+
 	/** Kokoro's OpenAI-compatible speech endpoint; the server calls it for the app. */
 	public String kokoroUrl() {
 		return get("kokoro-url", "");
